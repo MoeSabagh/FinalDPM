@@ -1,4 +1,4 @@
-package finalProject;
+package soccerRobot;
 
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
@@ -12,12 +12,18 @@ import lejos.robotics.SampleProvider;
 
 public class soccerVehicle {
 	
-	private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
-	private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("D"));
+	private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("B"));
+	private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("C"));
+	public static final EV3LargeRegulatedMotor upperMotor = new EV3LargeRegulatedMotor(LocalEV3.get().getPort("A"));
+
+	public static final EV3ColorSensor sweepSensor = new EV3ColorSensor(LocalEV3.get().getPort("S4"));
+	public static final SensorMode sweepValue = sweepSensor.getColorIDMode();			
+	public static final float[] sweepData = new float[sweepSensor.sampleSize()];
+	
 	private static final Port usPort = LocalEV3.get().getPort("S1");		
 	private static final Port colorPort = LocalEV3.get().getPort("S2");
 	public static final double WHEEL_RADIUS = 2.1;
-	public static final double TRACK = 23.5;
+	public static final double TRACK = 19.7;
 
 	public static void main (String[] args){
 		@SuppressWarnings("resource")							    	
@@ -37,6 +43,10 @@ public class soccerVehicle {
 		Controller controller = new Controller(odo,usl);	
 		LightLocalizer lsl = new LightLocalizer(odo, colorValue, colorData);
 		lsl.doLocalization();		
+		//controller.sweep();
+		
+		while (Button.waitForAnyPress() != Button.ID_ESCAPE);
+		System.exit(0);	
 	}
 	public static EV3LargeRegulatedMotor getLeftMotor() {
 		return leftMotor;

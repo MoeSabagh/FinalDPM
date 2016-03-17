@@ -1,4 +1,4 @@
-package finalProject;
+package soccerRobot;
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.sensor.SensorMode;
@@ -10,12 +10,12 @@ public class LightLocalizer {
 	private float[] colorData;	
 	private Controller controller;
 	private double Black_Line=0.35;
-	private double Sensor_Offset=13.5;
+	private double Sensor_Offset=14.0;
 	private boolean crossLine=false;
 	private static final int ROTATE_SPEED = 150;
 	private static final int ROTATE_SLOW=100;
-	private final double radius=2.1;
-	private final double width=15.8;
+	private final double ERROR_X=2.0;
+	private final double ERROR_Y=3.50;
 	
 	public LightLocalizer(Odometer odo, SensorMode colorSensor, float[] colorData) {
 		this.odo = odo;
@@ -30,23 +30,23 @@ public class LightLocalizer {
 			controller.forward();
 		}
 		controller.Stop();
-		odo.setY(0-Sensor_Offset);
+		odo.setY(ERROR_Y + Sensor_Offset);
 		controller.turnTo(0);
 		soccerVehicle.getLeftMotor().setSpeed(ROTATE_SPEED);
 		soccerVehicle.getRightMotor().setSpeed(ROTATE_SPEED);
-		soccerVehicle.getLeftMotor().rotate(convertAngle(radius, width, 90.0), true);
-		soccerVehicle.getRightMotor().rotate(-convertAngle(radius, width, 90.0), false);
+		soccerVehicle.getLeftMotor().rotate(convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, 90.0), true);
+		soccerVehicle.getRightMotor().rotate(-convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, 90.0), false);
 		while(!crossLine()){
 			controller.forward();
 		}
 		controller.Stop();
-		odo.setY(0-Sensor_Offset);
-		odo.setX(0-Sensor_Offset);
-		odo.setTheta(90);
+		//odo.setY(0+Sensor_Offset);
+		odo.setX(Sensor_Offset - ERROR_X);
+		odo.setTheta(70);
 		controller.travelTo(0, 0);
 		controller.turnTo(0);
-		
-//Method 2
+	
+/*//Method 2
 		//set up line count 
 		int linecount=0;
 		double line[]=new double[4];
@@ -91,9 +91,9 @@ public class LightLocalizer {
 		//move to origin and face 0degree
 		controller.travelTo(0, 0);
 		controller.turnTo(0);
-	}
-
 	
+*/
+	}
 	public boolean crossLine(){
 		
 		//check if it pass a line

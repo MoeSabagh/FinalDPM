@@ -1,4 +1,8 @@
-package finalProject;
+package soccerRobot;
+
+import lejos.hardware.ev3.LocalEV3;
+import lejos.hardware.sensor.EV3ColorSensor;
+import lejos.hardware.sensor.SensorMode;
 
 public class Controller extends Thread {
 
@@ -6,6 +10,7 @@ public class Controller extends Thread {
 	private USLocalizer usl;
 	private static final int FORWARD_SPEED = 250;
 	private static final int ROTATE_SPEED = 150;
+	public static int ROTATION_SPEED = 80;
 
 	private boolean navigating = false;
 
@@ -44,8 +49,8 @@ public class Controller extends Thread {
 				navigating = false;
 				break;
 			}
-			soccerVehicle.getLeftMotor().setSpeed(200);
-			soccerVehicle.getRightMotor().setSpeed(200);
+			soccerVehicle.getLeftMotor().setSpeed(FORWARD_SPEED);
+			soccerVehicle.getRightMotor().setSpeed(FORWARD_SPEED);
 			soccerVehicle.getLeftMotor().forward();
 			soccerVehicle.getRightMotor().forward();
 
@@ -119,9 +124,56 @@ public class Controller extends Thread {
 		}
 	
 	public void forward(){
-		soccerVehicle.getLeftMotor().setSpeed(200);
-		soccerVehicle.getRightMotor().setSpeed(200);
+		soccerVehicle.getLeftMotor().setSpeed(100);
+		soccerVehicle.getRightMotor().setSpeed(100);
 		soccerVehicle.getLeftMotor().forward();
 		soccerVehicle.getRightMotor().forward();
 	}
+	
+	
+	
+	public void sweep() {
+		turnTo(0.0);
+
+		soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
+		soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
+		soccerVehicle.getLeftMotor().forward();
+		soccerVehicle.getRightMotor().backward();
+		
+		soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
+		float color = soccerVehicle.sweepData[0];
+
+		while (color != 7.0) {
+			soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
+			color = soccerVehicle.sweepData[0];
+			
+			/*soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
+			soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
+			soccerVehicle.getLeftMotor().forward();
+			soccerVehicle.getRightMotor().backward();
+			*/
+			
+			if (odo.getTheta() >= 90){
+				soccerVehicle.getLeftMotor().stop();
+				soccerVehicle.getRightMotor().stop();
+				turnTo(0.0);
+				travelTo(odo.getX(), odo.getY() + 7.62);
+				soccerVehicle.getLeftMotor().stop();
+				soccerVehicle.getRightMotor().stop();
+				sweep();
+			}
+		}
+		soccerVehicle.getLeftMotor().stop();
+		soccerVehicle.getRightMotor().stop();
+		//pickUp();
+		
+	}
+	
+	public void pickUp(){
+		
+		soccerVehicle.upperMotor.forward();
+		travelTo(odo.getX(), odo.getY() + 3.0);
+		soccerVehicle.upperMotor.stop();
+
+	}	
 }

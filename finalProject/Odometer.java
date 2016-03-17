@@ -8,7 +8,7 @@
 //ID:260524744
 
 
-package finalProject;
+package soccerRobot;
 
 public class Odometer extends Thread {
 	// robot position
