@@ -32,7 +32,8 @@ public class soccerVehicle {
 	
 
 	public static final double WHEEL_RADIUS = 2.1;
-	public static final double TRACK = 19.7;
+	public static final double TRACK = 19.6;
+	public static final double TRACK_ODO=21.3;
 
 	public static void main (String[] args){
 		@SuppressWarnings("resource")							    	
@@ -54,9 +55,8 @@ public class soccerVehicle {
 		LightLocalizer lsl = new LightLocalizer(odo, colorValue, colorData,controller);
 		lsl.doLocalization();	
 		odoC.start();
-		
-		//controller.sweep();
-		
+		controller.turnTo(90);
+		//controller.pickUp();
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE);
 		System.exit(0);	
 	}

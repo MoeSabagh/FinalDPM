@@ -12,16 +12,26 @@ public class Controller extends Thread {
 
 	private Odometer odo;
 	private USLocalizer usl;
-	private static final int FORWARD_SPEED = 250;
-	private static final int ROTATE_SPEED = 150;
+	private static final int FORWARD_SPEED = 400;
+	private static final int ROTATE_SPEED = 300;
 	public static int ROTATION_SPEED = 80;
 
 	private boolean navigating = false;
 	private final int bandCenter = 14, bandwidth = 3;
-	private final int motorStraight = 100, FILTER_OUT = 20;
+	private final int motorStraight = 200, FILTER_OUT = 20;
 	private int distance;
 	private int filterControl;
-
+	
+	private double PlatX = 30.48;  // **************The x coordinate of the bottom left corner of the platform
+	private double PlatY = 30.48;  // **************The y coordinate of the bottom left corner of the platform
+	private double EdgeToCenter = 3.81;  //The distance from the edge of the platform to the center of the first ball
+	private double SensorToWheels = 3.50;  //*******************The distance between the light sensor and the front wheels.
+	private double DistTwoBalls = 7.62; //The distance from the center of one ball to the other
+	private double BallColor = 7.0; // the color of the ball to be picked
+	private double Ball_Oponent; //*********** Oponents ball color
+	private int BallsPicked = 0;
+	private int BallsChecked = 0;
+	
 	public Controller(Odometer odo, USLocalizer usl) {
 		this.odo = odo;
 		this.usl = usl;
@@ -64,6 +74,8 @@ public class Controller extends Thread {
 				soccerVehicle.getLeftMotor().stop(true);
 				soccerVehicle.getRightMotor().stop(false);
 				navigating = false;
+				//soccerVehicle.getLeftMotor().stop();
+				//soccerVehicle.getRightMotor().stop();
 				break;
 			}
 			soccerVehicle.getLeftMotor().setSpeed(200);
@@ -120,50 +132,74 @@ public class Controller extends Thread {
 		soccerVehicle.getRightMotor().forward();
 	}
 
-	public void sweep() {
-		turnTo(0.0);
-
-		soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
-		soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
+	public void pickUp() {
+		if (BallsChecked == 0) {
+		   travelTo(PlatX - 10, PlatY);
+		   soccerVehicle.getLeftMotor().stop();
+		   soccerVehicle.getRightMotor().stop();
+		   turnTo(0.0);
+		   travelTo(odo.getX(), odo.getY() + EdgeToCenter);
+		   soccerVehicle.getLeftMotor().stop();
+		   soccerVehicle.getRightMotor().stop();
+		}
+		
+		else {
+			travelTo(odo.getX(), odo.getY() + DistTwoBalls);
+			soccerVehicle.getLeftMotor().stop();
+			soccerVehicle.getRightMotor().stop();
+		}
+		
+		turnTo(90);
 		soccerVehicle.getLeftMotor().forward();
-		soccerVehicle.getRightMotor().backward();
-
+		soccerVehicle.getRightMotor().forward();
+		
 		soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 		float color = soccerVehicle.sweepData[0];
-
-		while (color != 7.0) {
+		
+		while (color != BallColor && color != Ball_Oponent) {
 			soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 			color = soccerVehicle.sweepData[0];
-
-			/*
-			 * soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
-			 * soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
-			 * soccerVehicle.getLeftMotor().forward();
-			 * soccerVehicle.getRightMotor().backward();
-			 */
-
-			if (odo.getTheta() >= 90) {
-				soccerVehicle.getLeftMotor().stop();
-				soccerVehicle.getRightMotor().stop();
-				turnTo(0.0);
-				travelTo(odo.getX(), odo.getY() + 7.62);
-				soccerVehicle.getLeftMotor().stop();
-				soccerVehicle.getRightMotor().stop();
-				sweep();
-			}
 		}
+		
 		soccerVehicle.getLeftMotor().stop();
 		soccerVehicle.getRightMotor().stop();
-		// pickUp();
+		
+		if (color == BallColor) {
+			soccerVehicle.upperMotor.setSpeed(5000);
+            soccerVehicle.upperMotor.forward();
+		    travelTo(odo.getX() + SensorToWheels, odo.getY());
+		    soccerVehicle.getLeftMotor().stop();
+			soccerVehicle.getRightMotor().stop();
+		    soccerVehicle.upperMotor.stop();
+		    travelTo(odo.getX() - SensorToWheels, odo.getY());
+		    turnTo(0.0);
+		    BallsPicked++;
+		    BallsChecked++;
+		    if (BallsChecked != 4);
+		       //pickUp();
+
+		}
+		else {
+			turnTo(0.0);
+			BallsChecked++;
+			if (BallsChecked != 4);
+			   //pickUp();
+		}
+		
 
 	}
-
-	public void pickUp() {
-
-		soccerVehicle.upperMotor.forward();
-		travelTo(odo.getX(), odo.getY() + 3.0);
-		soccerVehicle.upperMotor.stop();
-
+	
+	public void shoot() {
+        soccerVehicle.upperMotor.setSpeed(1000);
+        soccerVehicle.upperMotor.backward();
+        
+        try {
+			Thread.sleep(2000);
+		}
+        catch (InterruptedException e) {
+        }
+        
+        soccerVehicle.upperMotor.stop();
 	}
 
 	public void doAvoidance(double x, double y) {
@@ -244,3 +280,42 @@ public class Controller extends Thread {
 		}
 	}
 }
+
+
+/*public void sweep() {
+	turnTo(0.0);
+
+	soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
+	soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
+	soccerVehicle.getLeftMotor().forward();
+	soccerVehicle.getRightMotor().backward();
+
+	soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
+	float color = soccerVehicle.sweepData[0];
+
+	while (color != 7.0) {
+		soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
+		color = soccerVehicle.sweepData[0];
+
+		
+		 * soccerVehicle.getLeftMotor().setSpeed(ROTATION_SPEED);
+		 * soccerVehicle.getRightMotor().setSpeed(ROTATION_SPEED);
+		 * soccerVehicle.getLeftMotor().forward();
+		 * soccerVehicle.getRightMotor().backward();
+		 
+
+		if (odo.getTheta() >= 90) {
+			soccerVehicle.getLeftMotor().stop();
+			soccerVehicle.getRightMotor().stop();
+			turnTo(0.0);
+			travelTo(odo.getX(), odo.getY() + 7.62);
+			soccerVehicle.getLeftMotor().stop();
+			soccerVehicle.getRightMotor().stop();
+			sweep();
+		}
+	}
+	soccerVehicle.getLeftMotor().stop();
+	soccerVehicle.getRightMotor().stop();
+	// pickUp();
+
+}*/

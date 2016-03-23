@@ -40,7 +40,7 @@ public class Odometer extends Thread {
 			double deltaLeft = Math.toRadians(TachoNowL - TachoBeforeL);
 			double deltaRight = Math.toRadians(TachoNowR - TachoBeforeR);
 			double radiusW = soccerVehicle.WHEEL_RADIUS;
-			double track = soccerVehicle.TRACK;
+			double track = soccerVehicle.TRACK_ODO;
 			
 			
 			
