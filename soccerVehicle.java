@@ -44,8 +44,8 @@ public class soccerVehicle {
 	public static void main(String[] args) throws IOException {
 		
 		//The setting of wifi variables
-		WifiConnection wifi = new WifiConnection("192.168.10.109", 2);
 		int start = 1; //For beta demo
+		/*WifiConnection wifi = new WifiConnection("192.168.10.109", 2);
 		SC = wifi.StartData.get("SC"); //Starting corner
 		Role = wifi.StartData.get("Role");//Position: 0=Forward, 1=Defense
 		w1 = wifi.StartData.get("w1");//Width of the goal [1,4] (tiles)
@@ -56,7 +56,7 @@ public class soccerVehicle {
 		urx = wifi.StartData.get("ur-x");//x position of the upper right of the platform [-1,11] (tiles)
 		ury = wifi.StartData.get("ur-y");//y position of the upper right of the platform [-1,11] (tiles)
 		BC = wifi.StartData.get("BC");//Forward ball color: 0 = red, 1 = blue, 2 = any
-
+*/
 		@SuppressWarnings("resource")
 		SensorModes usSensor = new EV3UltrasonicSensor(usPort);
 		SampleProvider usValue = usSensor.getMode("Distance");
@@ -84,6 +84,7 @@ public class soccerVehicle {
 		lsl.doLocalization();
 		odoC.start();
 		odoAC.start();
+		
 		controller.start(); // For beta demo
 		/*if(Role == 0){
 		 * controller.start();
@@ -95,8 +96,7 @@ public class soccerVehicle {
 		
 
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE)
-			;
-		System.exit(0);
+			System.exit(0);
 	}
 
 	public static EV3LargeRegulatedMotor getLeftMotor() {

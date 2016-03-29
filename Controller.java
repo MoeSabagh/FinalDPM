@@ -7,32 +7,34 @@
  * Mohamed Elsabagh | ID: 260603261
  * */
 package finalProject;
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
 
 public class Controller extends Thread {
 
 	private Odometer odo;
 	private USLocalizer usl;
-	private static final int FORWARD_SPEED = 400;	
 	private static final int ROTATE_SPEED = 300;	
 	public static int ROTATION_SPEED = 80;
-
+	private static double turnAngle;
+	private static double newTheta;
 	private boolean navigating = false;
+	
 	private final int bandCenter = 24, bandwidth = 3;
 	private final int motorStraight = 200 , FILTER_OUT = 20;
 	private int distance;
 	private int filterControl;
-	//tile spacing
-	private static final double tile_spacing=30.48;
 	
-	private double PlatX ; // **************The x coordinate of the bottom left corner of the platform
-	private double PlatY ; // **************The y coordinate of the bottom left corner of the platform
+	private static final double tile_spacing=30.48; //Tile spacing
+	
+	private double PlatX; // The x coordinate of the bottom left corner of the platform
+	private double PlatY; // The y coordinate of the bottom left corner of the platform
 	private double UPlatX; // **************The x coordinate of the upper right corner of the platform
 	private double UPlatY; // **************The y coordinate of the upper right corner of the platform
 	private double EdgeToCenter = 3.81;  //The distance from the edge of the platform to the center of the first ball
-	private double SensorToWheels = 3.50;  //*******************The distance between the light sensor and the front wheels.
+	private double SensorToWheels = 3.50;  //The distance between the light sensor and the front wheels.
 	private double DistTwoBalls = 7.62; //The distance from the center of one ball to the other
-	private double BallColor = 7.0; // the color of the ball to be picked
-	private double Ball_Oponent; //*********** Oponents ball color
+	private double Color1;
+	private double Color2;
 	private int BallsPicked = 0;
 	private int BallsChecked = 0;
 
@@ -44,6 +46,7 @@ public class Controller extends Thread {
 	public Controller(Odometer odo) {
 		this.odo = odo;
 	}
+	
 	public void run(){
 		pickUp();
 		double deltaX = odo.getX();
@@ -53,77 +56,90 @@ public class Controller extends Thread {
 	}
 
 	public void travelTo(double x, double y) {
+		navigating = true;
+	
+		// Getting odometer data and storing it into variables
+		double curX = odo.getX();
+		double curY = odo.getY();
+		double curTheta = odo.getTheta();
+		// Some math to calculate the changes in x, y and the linear distance to be travelled
+		double deltaX = x - curX;
+		double deltaY = y - curY;
+		double travelDis = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+		// The following conditions will return the difference between the destination angle and the current one
+		// This result varies depending on which quadrant the destination lies in
+		if(deltaX > 0 && deltaY > 0) {
+			newTheta = 90 - (Math.atan2(deltaY, deltaX)*(180/Math.PI));
+		}
+		else if((deltaX < 0) && (deltaY > 0)){
+			newTheta = 270 +(180 - ((Math.atan2(deltaY, deltaX)*(180/Math.PI))));
+		}
+		else if((deltaX < 0) && (deltaY < 0)){
+			newTheta =  90 - (Math.atan2(deltaY, deltaX)*(180/Math.PI));
+		}
+		else if((deltaX > 0) && (deltaY < 0)){
+			newTheta =  90 - (Math.atan2(deltaY, deltaX)*(180/Math.PI));
+		}
+		else if(deltaX >= -5 && deltaX <= 5 && deltaY > 0){
+			newTheta = 0;
+		}
+		else if(deltaX >= -5 && deltaX <= 5 && deltaY < 0){
+			newTheta = 180;
+		}
+		else if(deltaY >= -5 && deltaY <= 5 && deltaX > 0){
+			newTheta = 90;
+		}
+		else if(deltaY >= -5 && deltaY <= 5 && deltaX < 0){
+			newTheta = 270;
+		}
 		
-		this.navigating = true;
-		// The first thing the ev3 does is turn to
-		// the destination position and goes forward
-		double deltaX = x - odo.getX();
-		double deltaY = y - odo.getY();
-		turnTo(Math.atan2(deltaX, deltaY));
-		soccerVehicle.getLeftMotor().setSpeed(200);
-		soccerVehicle.getRightMotor().setSpeed(200);
-		soccerVehicle.getLeftMotor().forward();
-		soccerVehicle.getRightMotor().forward();
-		// Getting the values of the US sensor to
-		// check the distance from an obstacle.
-		distance = usl.getFilteredData();
-		while (isNavigating()) {
-			distance = usl.getFilteredData();
-			// Redeclaration of values for when the Navigator avoids an obstacle
-			deltaX = x - odo.getX();
-			deltaX = y - odo.getY();
-			// Checks if there's an obstacle in the way.
-			// If so, avoid it
-			if (bandCenter > distance) {
-				doAvoidance(deltaX, deltaY);
-				deltaX = x - odo.getX();
-				deltaX = y - odo.getY();
-				turnTo(Math.atan2(deltaX, deltaY));
+		// reset the motors
+		for (EV3LargeRegulatedMotor motor : new EV3LargeRegulatedMotor[] { soccerVehicle.getLeftMotor(), soccerVehicle.getRightMotor()}) {
+			motor.stop();
+			motor.setAcceleration(3000);
+		}
+		
+		// Call to the turnTo() method so that the robot faces the correct direction
+		turnTo(newTheta);
+		// After turning, set the motors to forward speed and drive for the previously calculated traveDis
+		soccerVehicle.getLeftMotor().setSpeed(motorStraight);
+		soccerVehicle.getRightMotor().setSpeed(motorStraight);
+		//soccerVehicle.getLeftMotor().forward();
+		//soccerVehicle.getRightMotor().forward();
+		soccerVehicle.getLeftMotor().rotate(convertDistance(soccerVehicle.WHEEL_RADIUS, travelDis), true);
+		soccerVehicle.getRightMotor().rotate(convertDistance(soccerVehicle.WHEEL_RADIUS, travelDis), false);		
+	}
+
+		public void turnTo(double theta){
+			// Store the current angle in a variable
+			double curTheta = odo.getTheta();
+			// Using the angle difference calculated in travelTo()
+			// check if it the minimal angle and if not, change it accordingly
+			if((theta - curTheta) >= -180 && (theta - curTheta) <= 180){
+				turnAngle = theta - curTheta;
 			}
+			else if((theta - curTheta) < -180){
+				turnAngle = (theta - curTheta) +360;
+			}
+			else if((theta - curTheta) > 180){
+				turnAngle = (theta - curTheta) -360;
+			}
+			// Set the motors to rotate speed and rotate the minimal angle
+			soccerVehicle.getLeftMotor().setSpeed(ROTATE_SPEED);
+			soccerVehicle.getRightMotor().setSpeed(ROTATE_SPEED);
+			soccerVehicle.getLeftMotor().rotate(convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, turnAngle), true);
+			soccerVehicle.getRightMotor().rotate(-convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, turnAngle), false);
 			
-			// After it clears the obstacle, turn
-			// to the designated position and go forward
-			if (Math.toDegrees(Math.atan2(deltaX, deltaY)) - odo.getTheta() > 3) {
-				turnTo(Math.atan2(deltaX, deltaY));
-			}
-			if ((Math.pow(deltaX, 2) + Math.pow(deltaY, 2)) <= 0.5) {
-				soccerVehicle.getLeftMotor().stop(true);
-				soccerVehicle.getRightMotor().stop(false);
-				navigating = false;
-				break;
-			}
-			soccerVehicle.getLeftMotor().setSpeed(200);
-			soccerVehicle.getRightMotor().setSpeed(200);
-			soccerVehicle.getLeftMotor().forward();
-			soccerVehicle.getRightMotor().forward();
+			navigating = true;
 		}
-	}
 
-	public void turnTo(double theta) {
-		
-		// Takes the difference in theta to see how much the robot must rotate.
-		theta = Math.toDegrees(theta);
-		double thetaNow = odo.getTheta();
-		double thetaDifference = theta - thetaNow;
-		// Minimizes the amount it needs to turn.
-		while (thetaDifference <= -180) {
-			thetaDifference += 360;
+		public boolean isNavigating(){
+			boolean answer = false;
+			if(navigating){
+				answer = true;
+			}
+			return answer;
 		}
-		while (thetaDifference >= 180) {
-			thetaDifference -= 360;
-		}
-		// Rotates to the desired angle
-		soccerVehicle.getLeftMotor().setSpeed(ROTATE_SPEED);
-		soccerVehicle.getRightMotor().setSpeed(ROTATE_SPEED);
-		soccerVehicle.getLeftMotor()
-				.rotate(convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, thetaDifference), true);
-		soccerVehicle.getRightMotor()
-				.rotate(-convertAngle(soccerVehicle.WHEEL_RADIUS, soccerVehicle.TRACK, thetaDifference), false);
-	}
-
-	public boolean isNavigating() {
-		return this.navigating;
-	}
 
 	public static int convertDistance(double radius, double distance) {
 		return (int) ((180.0 * distance) / (Math.PI * radius));
@@ -134,10 +150,8 @@ public class Controller extends Thread {
 	}
 
 	public void Stop() {
-		soccerVehicle.getLeftMotor().setSpeed(0);
-		soccerVehicle.getRightMotor().setSpeed(0);
-		soccerVehicle.getLeftMotor().forward();
-		soccerVehicle.getRightMotor().forward();
+		soccerVehicle.getLeftMotor().stop(true);
+		soccerVehicle.getRightMotor().stop(false);
 	}
 
 	public void forward() {
@@ -148,65 +162,114 @@ public class Controller extends Thread {
 	}
 
 	public void pickUp() {
-		if (BallsChecked == 0) {
-		   travelTo(PlatX - 10, PlatY);
-		   soccerVehicle.getLeftMotor().stop();
-		   soccerVehicle.getRightMotor().stop();
-		   turnTo(0.0);
-		   travelTo(odo.getX(), odo.getY() + EdgeToCenter);
-		   soccerVehicle.getLeftMotor().stop();
-		   soccerVehicle.getRightMotor().stop();
+		if (soccerVehicle.BC == 0) {
+			Color1 = 7.0;
+			Color2 = 7.0;
+		}
+		else if(soccerVehicle.BC == 1) {
+			Color1 = 2.0;
+			Color2 = 2.0;
+		}
+		else if(soccerVehicle.BC == 2) {
+			Color1 = 7.0;
+			Color2 = 2.0;
 		}
 		
+		PlatX = (soccerVehicle.llx)*tile_spacing;
+		PlatX = (soccerVehicle.lly)*tile_spacing;
+		
+		if (BallsChecked == 0) {
+		   travelTo(PlatX - 20, PlatY);
+		   Stop();
+		   turnTo(0.0);
+		   travelTo(odo.getX(), (odo.getY() + EdgeToCenter));
+		   Stop();
+		}
+
 		else {
 			travelTo(odo.getX(), odo.getY() + DistTwoBalls);
-			soccerVehicle.getLeftMotor().stop();
-			soccerVehicle.getRightMotor().stop();
+			Stop();
 		}
 		
-		turnTo(90);
+		turnTo(95);
 		soccerVehicle.getLeftMotor().forward();
 		soccerVehicle.getRightMotor().forward();
 		
 		soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 		float color = soccerVehicle.sweepData[0];
 		
-		while (color != BallColor && color != Ball_Oponent) {
+		while (color != 7.0 && color != 2.0) {
 			soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 			color = soccerVehicle.sweepData[0];
 		}
 		
-		soccerVehicle.getLeftMotor().stop();
-		soccerVehicle.getRightMotor().stop();
-		
-		if (color == BallColor) {
-			soccerVehicle.upperMotor.setSpeed(5000);
-            soccerVehicle.upperMotor.forward();
-		    travelTo(odo.getX() + SensorToWheels, odo.getY());
-		    soccerVehicle.getLeftMotor().stop();
-			soccerVehicle.getRightMotor().stop();
+		if (color == Color1 || color == Color2) {
+			Stop();
+			
+			soccerVehicle.shootMotor.setAcceleration(1000000);
+			soccerVehicle.shootMotor.setSpeed(1000000);
+            soccerVehicle.shootMotor.forward();
+			try {
+				Thread.sleep(2000);
+			}
+	        catch (InterruptedException e) {	
+	        }
+			soccerVehicle.getLeftMotor().setSpeed(200);
+			soccerVehicle.getRightMotor().setSpeed(200);
+			soccerVehicle.getLeftMotor().forward();
+			soccerVehicle.getRightMotor().forward();
+			try {
+				Thread.sleep(800);
+			}
+	        catch (InterruptedException e) {	
+	        }
+		    Stop();
 		    soccerVehicle.upperMotor.stop();
-		    travelTo(odo.getX() - SensorToWheels, odo.getY());
+		    
+		    soccerVehicle.getLeftMotor().setSpeed(100);
+			soccerVehicle.getRightMotor().setSpeed(100);
+			soccerVehicle.getLeftMotor().backward();
+			soccerVehicle.getRightMotor().backward();
+			try {
+				Thread.sleep(5000);
+			} 
+			catch (InterruptedException e) {
+			}
+			Stop();
+					
 		    turnTo(0.0);
 		    BallsPicked++;
 		    BallsChecked++;
-		    if (BallsChecked != 4);
+		    if (BallsChecked != 4){
 		       //pickUp();
-
+		    }
 		}
 		else {
+			Stop();
+			soccerVehicle.getLeftMotor().setSpeed(100);
+			soccerVehicle.getRightMotor().setSpeed(100);
+			soccerVehicle.getLeftMotor().backward();
+			soccerVehicle.getRightMotor().backward();
+			try {
+				Thread.sleep(3000);
+			} 
+			catch (InterruptedException e) {
+			}
+			Stop();
+			
 			turnTo(0.0);
 			BallsChecked++;
 			if (BallsChecked != 4);
-			   //pickUp();
+			   pickUp();
 		}
 		
 
 	}
 	
 	public void shoot() {
-        soccerVehicle.upperMotor.setSpeed(1000);
-        soccerVehicle.upperMotor.backward();
+		soccerVehicle.shootMotor.setAcceleration(1000000);
+        soccerVehicle.shootMotor.setSpeed(1000000);
+        soccerVehicle.shootMotor.backward();
         
         try {
 			Thread.sleep(2000);
@@ -214,7 +277,7 @@ public class Controller extends Thread {
         catch (InterruptedException e) {
         }
         
-        soccerVehicle.upperMotor.stop();
+        soccerVehicle.shootMotor.stop();
 	}
 
 	public void doAvoidance(double x, double y) {

@@ -50,8 +50,7 @@ public class LightLocalizer {
 			controller.forward();
 		}
 		controller.Stop();
-		// odo.setY(0+Sensor_Offset);
-		odo.setX(Sensor_Offset - ERROR_X);
+		odo.setX(Sensor_Offset + ERROR_X);
 		odo.setTheta(70);
 		controller.travelTo(0, 0);
 		controller.turnTo(0);
