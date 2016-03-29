@@ -22,7 +22,7 @@ public class Odometer extends Thread {
 	public Odometer() {
 		x = 0.0;
 		y = 0.0;
-		theta = 90.0;
+		theta = 0.0;
 		lock = new Object();
 	}
 

@@ -12,7 +12,7 @@ import lejos.robotics.SampleProvider;
 
 public class USLocalizer {
 
-	public static int ROTATION_SPEED = 80;
+	public static int ROTATION_SPEED = 200;
 
 	private Odometer odo;
 	private SampleProvider usSensor;
