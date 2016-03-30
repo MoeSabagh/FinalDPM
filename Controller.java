@@ -22,15 +22,15 @@ public class Controller extends Thread {
 	
 	private static final double tile_spacing=30.48; //Tile spacing
 	
-	private double PlatX; // The x coordinate of the bottom left corner of the platform
-	private double PlatY; // The y coordinate of the bottom left corner of the platform
+	private double PlatX = 6*tile_spacing; //***** The x coordinate of the bottom left corner of the platform
+	private double PlatY = 5*tile_spacing; //**** The y coordinate of the bottom left corner of the platform
 	private double UPlatX; // **************The x coordinate of the upper right corner of the platform
 	private double UPlatY; // **************The y coordinate of the upper right corner of the platform
 	private double EdgeToCenter = 3.81;  //The distance from the edge of the platform to the center of the first ball
 	private double SensorToWheels = 3.50;  //The distance between the light sensor and the front wheels.
 	private double DistTwoBalls = 7.62; //The distance from the center of one ball to the other
-	private double Color1;
-	private double Color2;
+	private double Color1 = 7.0;
+	private double Color2 = 2.0;
 	private int BallsPicked = 0;
 	private int BallsChecked = 0;
 	
@@ -48,7 +48,7 @@ public class Controller extends Thread {
 	public void run(){
 		pickUp();
 		deltaX = odo.getX();
-		deltaY = odo.getY() - soccerVehicle.SC*tile_spacing;
+		deltaY = odo.getY() - /*soccerVehicle.SC*/ 2*tile_spacing;
 		turnTo(Math.atan2(deltaX, deltaY));
 		shoot();
 	}
@@ -151,7 +151,7 @@ public class Controller extends Thread {
 	}
 
 	public void pickUp() {
-		if (soccerVehicle.BC == 0) {
+		/*if (soccerVehicle.BC == 0) {
 			Color1 = 7.0;
 			Color2 = 7.0;
 		}
@@ -166,6 +166,7 @@ public class Controller extends Thread {
 		
 		PlatX = (soccerVehicle.llx)*tile_spacing;
 		PlatY = (soccerVehicle.lly)*tile_spacing;
+		*/
 		
 		if (BallsChecked == 0) {
 		   travelTo(PlatX - 20, PlatY);
@@ -187,7 +188,7 @@ public class Controller extends Thread {
 		soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 		float color = soccerVehicle.sweepData[0];
 		
-		while (color != 7.0 && color != 2.0) {
+		while (color != Color1 && color != Color2) {
 			soccerVehicle.sweepSensor.fetchSample(soccerVehicle.sweepData, 0);
 			color = soccerVehicle.sweepData[0];
 		}
@@ -267,6 +268,4 @@ public class Controller extends Thread {
         soccerVehicle.shootMotor.stop();
         BallsPicked--;
 	}
-
-	
 }
