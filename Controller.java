@@ -7,6 +7,7 @@
  * Mohamed Elsabagh | ID: 260603261
  * */
 package finalProject;
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
 
 public class Controller extends Thread {
 
@@ -45,14 +46,46 @@ public class Controller extends Thread {
 	}
 	
 	public void run(){
+		travelTo(4*tile_spacing,2*tile_spacing);
+		//travelTo(0,120);
+		//travelTo(120,0);
+		//travelTo(0,0);
+		/*if(soccerVehicle.SC == 1 || soccerVehicle.SC == 2){
+			turnTo(0);
+			if(soccerVehicle.SC == 1){
+				travelTo(0, 0.5*tile_spacing);
+			}else if(soccerVehicle.SC == 2){
+				travelTo(10*tile_spacing, 0.5*tile_spacing);
+			}
+		}else if(soccerVehicle.SC == 3 || soccerVehicle.SC == 4){
+			turnTo(180);
+			if(soccerVehicle.SC == 4){
+				travelTo(0, 0.5*tile_spacing);
+			}else if(soccerVehicle.SC == 3){
+				travelTo(10*tile_spacing,0.5*tile_spacing);
+			}
+		}
+		travelTo(5*tile_spacing, 0.5*tile_spacing);
 		pickUp();
-		deltaX = odo.getX();
-		deltaY = odo.getY() - /*soccerVehicle.SC*/ 2*tile_spacing;
-		turnTo(Math.atan2(deltaX, deltaY));
-		shoot();
+		travelTo(5*tile_spacing, 11.5*tile_spacing-soccerVehicle.d1*tile_spacing);
+		turnTo(0);
+		int z = 0;
+		while(BallsPicked!=0){
+			z = (int) (Math.random()*3);
+			if(z == 0){
+				turnTo(0);
+			}else if(z == 1){
+				deltaX = -soccerVehicle.w1/2+10;
+				deltaY = 11*tile_spacing-(11.5-soccerVehicle.d1)*tile_spacing;
+				turnTo(newTheta(deltaX,deltaY));
+			}else if(z == 2){
+				deltaX = soccerVehicle.w1/2-10;
+				deltaY = 11*tile_spacing-(11.5-soccerVehicle.d1)*tile_spacing;
+				turnTo(30);
+			}
+			shoot();
+		}*/
 	}
-	
-	
 	public void travelTo(double x, double y){
 		navigating = true;
 		double curX = odo.getX();
@@ -76,13 +109,14 @@ public class Controller extends Thread {
 			}
 			deltaX = x - odo.getX();
 			deltaY = y - odo.getY();
-			if (Math.abs(odo.getTheta() - newTheta(deltaX, deltaY)) > 2) {
+			if ((Math.abs(odo.getTheta() - newTheta(deltaX, deltaY)) > 2) && (Math.abs(360-odo.getTheta() - newTheta(deltaX, deltaY)) > 2)) {
 				turnTo(newTheta(deltaX, deltaY));
+				soccerVehicle.getLeftMotor().setSpeed(motorStraight);
+				soccerVehicle.getRightMotor().setSpeed(motorStraight);
+				soccerVehicle.getLeftMotor().forward();
+				soccerVehicle.getRightMotor().forward();
 			}
-			soccerVehicle.getLeftMotor().setSpeed(motorStraight);
-			soccerVehicle.getRightMotor().setSpeed(motorStraight);
-			soccerVehicle.getLeftMotor().forward();
-			soccerVehicle.getRightMotor().forward();
+			
 		}
 	}
 

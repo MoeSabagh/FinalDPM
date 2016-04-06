@@ -8,10 +8,21 @@
  * */
 package finalProject;
 
+import lejos.hardware.motor.EV3LargeRegulatedMotor;
+
 public class Odometer extends Thread {
 	// robot position
+	
 	private double x, y, theta;
+	public static int lastTachoL;			// Tacho L at last sample
+	public static int lastTachoR;			// Tacho R at last sample 
+	public static int nowTachoL;			// Current tacho L
+	public static int nowTachoR;			// Current tacho R
+	public static double X;					// Current X position
+	public static double Y;					// Current Y position
+	public static double Theta;				// Current orientation
 
+	
 	// odometer update period, in ms
 	private static final long ODOMETER_PERIOD = 25;
 
@@ -25,43 +36,47 @@ public class Odometer extends Thread {
 		theta = 0.0;
 		lock = new Object();
 	}
-
+	
 	// run method (required for Thread)
 	public void run() {
 		long updateStart, updateEnd;
-		;
-		double TachoBeforeR=0;
-		double TachoBeforeL=0;
+		double distL, distR, deltaD, deltaT, dX, dY;                // Initialization of some variables for the odometer calculations
+	    
 		while (true) {
-			double TachoNowR = soccerVehicle.getRightMotor().getTachoCount();
-			double TachoNowL = soccerVehicle.getLeftMotor().getTachoCount();
 			updateStart = System.currentTimeMillis();
-			//Takes the difference of the Tacho counters and converts to radians for a later 
-			double deltaLeft = Math.toRadians(TachoNowL - TachoBeforeL);
-			double deltaRight = Math.toRadians(TachoNowR - TachoBeforeR);
-			double radiusW = soccerVehicle.WHEEL_RADIUS;
-			double track = soccerVehicle.TRACK_ODO;
+			// put (some of) your odometer code here
 			
+			nowTachoL = soccerVehicle.getLeftMotor().getTachoCount();      		            // get tacho counts
+			nowTachoR = soccerVehicle.getRightMotor().getTachoCount();
+			distL = Math.PI*soccerVehicle.WHEEL_RADIUS*(nowTachoL-lastTachoL)/180;		// compute L and R wheel displacements
+			distR = Math.PI*soccerVehicle.WHEEL_RADIUS*(nowTachoR-lastTachoR)/180;
+			lastTachoL = nowTachoL;								                // save tacho counts for next iteration
+			lastTachoR = nowTachoR;
+			deltaD = 0.5*(distL+distR);							                // compute vehicle displacement
+			deltaT = Math.atan((distL-distR)/soccerVehicle.TRACK);						// compute change in heading
+		    dX = deltaD * Math.sin(Theta);						                // compute X component of displacement
+			dY = deltaD * Math.cos(Theta);	                                    // compute Y component of displacement
+			Theta = Theta + deltaT;									            // update heading				
+			X = X + dX;											                // update estimates of X and Y position
+			Y = Y + dY;		
 			
-			
+			this.x = X;                // Passing the values of X and Y in x and y respectively
+			this.y = Y;                // so that they can be used by other classes like OdometryDisplay. 
+
 			synchronized (lock) {
-				//The change in arc and theta
-				double deltaC = radiusW * (deltaLeft + deltaRight) / 2;
-				double deltaTheta = radiusW * (deltaLeft - deltaRight) / track;
-				theta=Math.toRadians(theta);
-				//Add the change in x to the old value of x (similarly for y and theta)
-				y+=deltaC*Math.cos(theta+deltaTheta/2);
-				x+=deltaC*Math.sin(theta+deltaTheta/2);
-				theta=Math.toDegrees(theta+deltaTheta);
-				//Sets the value of now Tacho to old Tacho for next iteration
-				TachoBeforeL=TachoNowL;
-				TachoBeforeR=TachoNowR;
-				//If theta!=(0,360] then set it so that it is.
-				if(theta>360){
-					theta=theta-360;
+				// don't use the variables x, y, or theta anywhere but here!
+				
+				// Setting boundaries (0, 360) on Theta,
+				// converting Theta from radians to degrees 
+				// and passing its value to theta so that it can be used by other classes.
+				if(((Theta)*180/Math.PI) > 360){
+					theta = (Theta*180/Math.PI) - 360;
 				}
-				if(theta<0){
-					theta=360+theta;
+				else if(((Theta)*180/Math.PI) <0){
+					theta = (Theta*180/Math.PI) + 360;
+				}
+				else if((Theta*180/Math.PI) > 0 && (Theta*180/Math.PI) <360){
+					theta = (Theta*180/Math.PI);
 				}
 			}
 

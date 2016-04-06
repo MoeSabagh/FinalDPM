@@ -42,63 +42,58 @@ public class soccerVehicle {
 	public static int lly, urx, ury, BC;
 
 	public static void main(String[] args) throws IOException {
-		
-		//The setting of wifi variables
-		int start = 1; //For beta demo
-		/*WifiConnection wifi = new WifiConnection("192.168.10.109", 2);
-		SC = wifi.StartData.get("SC"); //Starting corner
-		Role = wifi.StartData.get("Role");//Position: 0=Forward, 1=Defense
-		w1 = wifi.StartData.get("w1");//Width of the goal [1,4] (tiles)
-		d1 = wifi.StartData.get("d1");//Position of defender line from North wall [1,5] (tiles)
-		d2 = wifi.StartData.get("d2");//Position of offensive line from South wall [1,5] (tiles)
-		llx = wifi.StartData.get("ll-x");//x position of the lower left of the platform [-1,11] (tiles)
-		lly = wifi.StartData.get("ll-y");//y position of the lower left of the platform [-1,11] (tiles)
-		urx = wifi.StartData.get("ur-x");//x position of the upper right of the platform [-1,11] (tiles)
-		ury = wifi.StartData.get("ur-y");//y position of the upper right of the platform [-1,11] (tiles)
-		BC = wifi.StartData.get("BC");//Forward ball color: 0 = red, 1 = blue, 2 = any
-*/		llx = 5;
-		lly = 5;
-		SC = 3;
-		BC = 2;
+
+		// The setting of wifi variables
+		/*WifiConnection wifi = new WifiConnection("192.168.10.112", 2);
+		SC = wifi.StartData.get("SC"); // Starting corner
+		Role = wifi.StartData.get("Role");// Position: 0=Forward, 1=Defense
+		w1 = wifi.StartData.get("w1");// Width of the goal [1,4] (tiles)
+		d1 = wifi.StartData.get("d1");// Position of defender line from North wall [1,5] (tiles)
+		d2 = wifi.StartData.get("d2");// Position of offensive line from South wall [1,5] (tiles)
+		llx = wifi.StartData.get("ll-x");// x position of the lower left of the platform [-1,11] (tiles)
+		lly = wifi.StartData.get("ll-y");// y position of the lower left of the platform [-1,11] (tiles)
+		urx = wifi.StartData.get("ur-x");// x position of the upper right of the platform [-1,11] (tiles)
+		ury = wifi.StartData.get("ur-y");// y position of the upper right of the platform [-1,11] (tiles)
+		BC = wifi.StartData.get("BC");// Forward ball color: 0 = red, 1 = blue, 2 = any*/
 		@SuppressWarnings("resource")
 		SensorModes usSensor = new EV3UltrasonicSensor(usPort);
 		SampleProvider usValue = usSensor.getMode("Distance");
 		float[] usData = new float[usValue.sampleSize()];
 
+		@SuppressWarnings("resource")
 		EV3ColorSensor colorSensor = new EV3ColorSensor(colorPort);
 		SensorMode rightValue = colorSensor.getRedMode();
 		float[] rightData = new float[rightValue.sampleSize()];
 
+		@SuppressWarnings("resource")
 		EV3ColorSensor lightSensor = new EV3ColorSensor(lightPort);
 		SensorMode leftValue = lightSensor.getRedMode();
 		float[] leftData = new float[leftValue.sampleSize()];
-		
+
 		Odometer odo = new Odometer();
 		OdometryCorrection odoC = new OdometryCorrection(odo, rightValue, rightData);
 		OdometryAngleCorrection odoAC = new OdometryAngleCorrection(odo, leftData, rightData, leftValue, rightValue);
 		LCDInfo lcd = new LCDInfo(odo);
-		
+
 		odo.start();
 		USLocalizer usl = new USLocalizer(odo, usValue, usData);
 		Controller controller = new Controller(odo, usl);
-		LightLocalizer lsl = new LightLocalizer(odo, rightValue, rightData, controller, start);
+		LightLocalizer lsl = new LightLocalizer(odo, rightValue, rightData, controller);
 		Avoidance avoid = new Avoidance(usl, controller, odo);
-	
-		usl.doLocalization();	
-		lsl.doLocalization();
+
+		/*usl.doLocalization();
+		lsl.doLocalization();*/
 		odoC.start();
 		odoAC.start();
-		avoid.start();
-		controller.start(); // For beta demo
-		
-		/*if(Role == 0){
-		 * controller.start();
-		 * }else if(Role == 1){
-		 * Defense defense = new Defense(controller, odo);
-		 * defense.start();
-		 * }
-		 */
-		
+		//avoid.start();
+		controller.start();
+
+		/*if (Role == 0) {
+			controller.start();
+		} else if (Role == 1) {
+			Defense defense = new Defense(controller, avoid, odo);
+			defense.start();
+		}*/
 
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE)
 			System.exit(0);
