@@ -50,12 +50,12 @@ public class LightLocalizer {
 			controller.forward();
 		}
 		controller.Stop();
-		// odo.setY(0+Sensor_Offset);
-		odo.setX(Sensor_Offset - ERROR_X);
+		odo.setX(Sensor_Offset + ERROR_X);
 		odo.setTheta(70);
 		controller.travelTo(0, 0);
 		controller.turnTo(0);
-		boolean[] setPos = { true, true, true };
+		return;
+		/*boolean[] setPos = { true, true, true };
 		if (start == 1) {
 			odo.setPosition(new double[] { 0, 0, 0 }, setPos);
 		} else if (start == 4) {
@@ -64,7 +64,7 @@ public class LightLocalizer {
 			odo.setPosition(new double[] { 300, 300, 180 }, setPos);
 		} else if (start == 2) {
 			odo.setPosition(new double[] { 300, 0, 270 }, setPos);
-		}
+		}*/
 
 	}
 
