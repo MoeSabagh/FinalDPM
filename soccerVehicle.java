@@ -35,7 +35,7 @@ public class soccerVehicle {
 
 	public static final double WHEEL_RADIUS = 2.1;
 	public static final double TRACK = 19.6;
-	public static final double TRACK_ODO = 21.3;
+	public static final double TRACK_ODO = 20.2;
 
 	// Parameters from the wifi
 	public static int SC, Role, w1, d1, d2, llx;
@@ -44,8 +44,8 @@ public class soccerVehicle {
 	public static void main(String[] args) throws IOException {
 		
 		//The setting of wifi variables
-		WifiConnection wifi = new WifiConnection("192.168.10.109", 2);
 		int start = 1; //For beta demo
+		/*WifiConnection wifi = new WifiConnection("192.168.10.109", 2);
 		SC = wifi.StartData.get("SC"); //Starting corner
 		Role = wifi.StartData.get("Role");//Position: 0=Forward, 1=Defense
 		w1 = wifi.StartData.get("w1");//Width of the goal [1,4] (tiles)
@@ -56,7 +56,10 @@ public class soccerVehicle {
 		urx = wifi.StartData.get("ur-x");//x position of the upper right of the platform [-1,11] (tiles)
 		ury = wifi.StartData.get("ur-y");//y position of the upper right of the platform [-1,11] (tiles)
 		BC = wifi.StartData.get("BC");//Forward ball color: 0 = red, 1 = blue, 2 = any
-
+*/		llx = 5;
+		lly = 5;
+		SC = 3;
+		BC = 2;
 		@SuppressWarnings("resource")
 		SensorModes usSensor = new EV3UltrasonicSensor(usPort);
 		SampleProvider usValue = usSensor.getMode("Distance");
@@ -79,12 +82,15 @@ public class soccerVehicle {
 		USLocalizer usl = new USLocalizer(odo, usValue, usData);
 		Controller controller = new Controller(odo, usl);
 		LightLocalizer lsl = new LightLocalizer(odo, rightValue, rightData, controller, start);
+		Avoidance avoid = new Avoidance(usl, controller, odo);
 	
 		usl.doLocalization();	
 		lsl.doLocalization();
 		odoC.start();
 		odoAC.start();
+		avoid.start();
 		controller.start(); // For beta demo
+		
 		/*if(Role == 0){
 		 * controller.start();
 		 * }else if(Role == 1){
@@ -95,8 +101,7 @@ public class soccerVehicle {
 		
 
 		while (Button.waitForAnyPress() != Button.ID_ESCAPE)
-			;
-		System.exit(0);
+			System.exit(0);
 	}
 
 	public static EV3LargeRegulatedMotor getLeftMotor() {
