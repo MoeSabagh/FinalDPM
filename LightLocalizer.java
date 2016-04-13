@@ -20,17 +20,15 @@ public class LightLocalizer {
 	private double Black_Line = 0.35;
 	private double Sensor_Offset = 14.0;
 	private boolean crossLine = false;
-	private static final int ROTATE_SPEED = 300;
-	private static final int ROTATE_SLOW = 100;
+	private static final int ROTATE_SPEED = 400;
 	private final double ERROR_X = 2.0;
 	private final double ERROR_Y = 3.50;
 
-	public LightLocalizer(Odometer odo, SensorMode colorSensor, float[] colorData, Controller controller,int start) {
+	public LightLocalizer(Odometer odo, SensorMode colorSensor, float[] colorData, Controller controller) {
 		this.odo = odo;
 		this.colorSensor = colorSensor;
 		this.colorData = colorData;
 		this.controller = controller;
-		this.start = start;
 	}
 
 	public void doLocalization() {
@@ -50,21 +48,10 @@ public class LightLocalizer {
 			controller.forward();
 		}
 		controller.Stop();
-		// odo.setY(0+Sensor_Offset);
-		odo.setX(Sensor_Offset - ERROR_X);
+		odo.setX(Sensor_Offset + ERROR_X);
 		odo.setTheta(70);
-		controller.travelTo(0, 0);
-		controller.turnTo(0);
-		boolean[] setPos = { true, true, true };
-		if (start == 1) {
-			odo.setPosition(new double[] { 0, 0, 0 }, setPos);
-		} else if (start == 4) {
-			odo.setPosition(new double[] { 0, 300, 90 }, setPos);
-		} else if (start == 3) {
-			odo.setPosition(new double[] { 300, 300, 180 }, setPos);
-		} else if (start == 2) {
-			odo.setPosition(new double[] { 300, 0, 270 }, setPos);
-		}
+		Sound.setVolume(Sound.VOL_MAX);
+		Sound.playNote(Sound.FLUTE, 784, 250);
 
 	}
 

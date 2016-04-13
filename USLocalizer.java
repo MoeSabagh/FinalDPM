@@ -8,11 +8,12 @@
  * */
 package finalProject;
 
+import lejos.hardware.Sound;
 import lejos.robotics.SampleProvider;
 
 public class USLocalizer {
 
-	public static int ROTATION_SPEED = 200;
+	public static int ROTATION_SPEED = 400;
 
 	private Odometer odo;
 	private SampleProvider usSensor;
@@ -31,6 +32,8 @@ public class USLocalizer {
 	// Performs ultrasonic localization
 	public void doLocalization() {
 		// Declaration of variables
+		Sound.setVolume(Sound.VOL_MAX);
+		Sound.playNote(Sound.FLUTE, 784, 250);
 		double[] pos = new double[3];
 		double thetaA = 0.0;
 		double thetaB = 0.0;

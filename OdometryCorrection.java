@@ -40,20 +40,21 @@ public class OdometryCorrection extends Thread {
 		// light value
 		colorValue.fetchSample(colorData, 0);
 		double colourLast = colorData[0];
+		double colourNow = 0;
 		double pos[] = new double[3];
 		while (true) {
 			correctionStart = System.currentTimeMillis();
 			// A new value that is compared to the value from before to see if a
 			// blackline was hit.
 			colorValue.fetchSample(colorData, 0);
-			double colourNow = colorData[0];
+			colourNow = colorData[0];
 			// Setting of parameters
 			x = odometer.getX();
 			y = odometer.getY();
 			theta = odometer.getTheta();
 			boolean setX = false;
 			boolean setY = false;
-			if (colourLast - colourNow > 0.1) {
+			if (colourLast - colourNow > 0.05) {
 				int i = 0;
 				int j = 0;
 				// Subtract the position of x/y the tile-spacing until it
@@ -73,7 +74,7 @@ public class OdometryCorrection extends Thread {
 					y -= tile_spacing;
 					j++;
 					if (y <= 3 && y >= -3) {
-						setX = true;
+						setY = true;
 					}
 				}
 				// The light sensor messes up at intersections, so if the robot
